@@ -8,6 +8,7 @@ const { signToken } = require('../utils/token');
 const { validationResult } = require('express-validator');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { v4: uuidv4 } = require('uuid');
 // const { errorLogger, appLogger } = require('../logger');
 
 async function sendEmail(
@@ -81,8 +82,11 @@ exports.createUser = async (req, res) => {
     const salt = await bcrypt.genSalt(saltRounds);
     const secPass = await bcrypt.hash(password, salt);
 
+    const userId = uuidv4();
+
     // Creating a new user
     const userCreated = await User.create({
+      userId:userId,
       username: username,
       email: email,
       contact: contact,

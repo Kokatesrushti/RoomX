@@ -11,6 +11,8 @@ const {
   sendCodetoEmail,
   deleteUser,
   deleteOrgAlongWithUsers,
+  addRoom,
+  getAllRooms,
 } = require('../controllers/adminController.js');
 // const fetchUser = require('../middlewares/fetchUser');
 
@@ -33,5 +35,11 @@ router.post('/deleteuser', deleteUser);
 router.get('/dashboard', adminDashboard);
 
 router.post('/sendcodetoemail', sendCodetoEmail);
+
+router.post('/addroom',addRoom)
+
+router.get('/getallrooms',getAllRooms)
+
+// router.post('/deleteroom',)
 
 module.exports = router;

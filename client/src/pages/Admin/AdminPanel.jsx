@@ -176,6 +176,9 @@ function AdminPanel() {
     <div className="bg-gray-100 min-h-screen p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-blue-500">Admin Panel</h1>
+        <Link to="/admin/addroom">
+        <button className="bg-blue-500 text-white py-2 px-4 rounded ml-20">Room Section</button>
+        </Link>
         <button onClick={Logout} className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
           Logout
         </button>

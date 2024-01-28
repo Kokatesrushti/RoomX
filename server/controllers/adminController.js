@@ -5,7 +5,9 @@ const User = require('../models/users');
 const { signToken } = require('../utils/token');
 const { validationResult } = require('express-validator');
 const OrganizationModel = require('../models/organizations');
-// const { errorLogger, appLogger } = require('../logger');
+const RoomModel=require('../models/room');
+const { v4: uuidv4 } = require('uuid');
+
 
 async function sendEmail(
   to,
@@ -250,6 +252,63 @@ async function sendCodetoEmail(req, res) {
 };
 
 
+async function addRoom(req, res) {
+  try {
+    const { room_name, location, capacity, price } = req.body;
+
+    const roomId = uuidv4();
+
+    // Create a new room
+    const newRoom = new RoomModel({
+      roomId,
+      room_name,
+      location,
+      capacity,
+      available: true,
+      price,
+    });
+
+    // Save the room to the database
+    await newRoom.save();
+
+    res.status(201).json({ success: true, room: newRoom });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+}
+
+async function getAllRooms(req, res) {
+  try {
+    const rooms = await RoomModel.find();
+    res.status(200).json({ success: true, rooms });
+  } catch (error) {
+    console.error('Error getting all rooms:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+}
+
+// async function deleteRoom(req, res) {
+//   const { roomId } = req.params;
+
+//   try {
+//     const room = await RoomModel.findById(roomId);
+
+//     if (!room) {
+//       return res.status(404).json({ success: false, error: 'Room not found' });
+//     }
+
+//     await Room.findByIdAndDelete(roomId);
+
+//     res.status(200).json({ success: true, message: 'Room deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting room:', error);
+//     res.status(500).json({ success: false, error: 'Internal server error' });
+//   }
+// }
+
+
+
 module.exports = {
   createOrganization,
   getAllOrg,
@@ -260,4 +319,6 @@ module.exports = {
   getOrganization,
   adminDashboard,
   sendCodetoEmail,
+  addRoom,
+  getAllRooms,
 };

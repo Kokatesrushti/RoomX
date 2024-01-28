@@ -5,6 +5,11 @@ const Schema = mongoose.Schema;
 
 
 const UserSchema = new Schema({
+    userId:{
+        type:String,
+        required: true,
+        unique:true,
+    },
     username: {
         type: String,
         required: true,

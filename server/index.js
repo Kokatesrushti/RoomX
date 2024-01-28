@@ -8,7 +8,7 @@ const cors = require("cors");
 
 const adminRoute = require("./routes/admin.js");
 const authRoute = require("./routes/auth.js");
-// const userRoute = require("./routes/user");
+const userRoute = require("./routes/user.js");
 const { verifyAdmin, verifyUser } = require("./middlewares/verifyLogin");
 // const { handle404, handle500 } = require('./controllers/errorController');
 
@@ -30,6 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/api/auth", authRoute);
 app.use("/api/admin", verifyAdmin, adminRoute);
+app.use("/api/room",userRoute)
 // app.use("/api/user", verifyUser, userRoute);
 
 

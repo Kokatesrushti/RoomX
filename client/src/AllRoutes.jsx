@@ -5,6 +5,9 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import AdminPanel from './pages/Admin/AdminPanel'
 import Getusers from './pages/Admin/Getusers'
+import AddRoom from './pages/Room/AddRoom'
+import RoomList from './pages/Room/RoomList'
+import DisplayRoom from './pages/Users/DisplayRoom'
 
 function AllRoutes() {
   const authtoken=localStorage.getItem('authtoken')
@@ -18,6 +21,9 @@ function AllRoutes() {
           path="/admin/getusers/:org_name/:org_code"
           element={authtoken ? <Getusers /> : <Navigate to='/login' />}
         />
+        <Route path="/admin/addroom" element={<AddRoom />}/>
+        <Route path="/admin/getrooms" element={<RoomList />} />
+        <Route path="/room" element={<DisplayRoom />} />
     </Routes>
   )
 }
