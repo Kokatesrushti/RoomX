@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-function RoomList() {
-  const [rooms, setRooms] = useState([]);
+function ProviderList() {
+  const [providers, setproviders] = useState([]);
   const authtoken = localStorage.getItem("authtoken");
 
   useEffect(() => {
     // Fetch rooms from the backend
-    const fetchRooms = async () => {
+    const fetchProviders = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8001/api/admin/getallrooms",
+          "http://localhost:8001/api/admin/getAllProviders",
           {
             method: "GET",
             headers: {
@@ -21,16 +21,16 @@ function RoomList() {
 
         if (response.ok) {
           const data = await response.json();
-          setRooms(data.rooms);
+          setproviders(data.providers);
         } else {
           console.error("Fetching rooms failed:", response.statusText);
         }
       } catch (error) {
-        console.error("Error during fetching rooms:", error);
+        console.error("Error during fetching providers:", error);
       }
     };
 
-    fetchRooms();
+    fetchProviders();
   }, [authtoken]);
 
   const handleDeleteRoom = async (roomId) => {
@@ -49,12 +49,12 @@ function RoomList() {
 
       if (response.ok) {
         // Remove the deleted room from the state
-        setRooms((prevRooms) =>
-          prevRooms.filter((room) => room._id !== roomId)
+        setproviders((prevProviders) =>
+          prevProviders.filter((room) => room._id !== roomId)
         );
-        console.log("Room deleted successfully");
+        console.log("Provider deleted successfully");
       } else {
-        console.error("Room deletion failed:", response.statusText);
+        console.error("Provider deletion failed:", response.statusText);
       }
     } catch (error) {
       console.error("Error during room deletion:", error);
@@ -67,23 +67,24 @@ function RoomList() {
       <table className="table-auto">
         <thead>
           <tr>
-            <th className="px-4 py-2">Room Name</th>
-            <th className="px-4 py-2">Capacity</th>
+            <th className="px-4 py-2">Provider Name</th>
+            <th className="px-4 py-2">Email</th>
             <th className="px-4 py-2">Location</th>
-            <th className="px-4 py-2">Price</th>
-            <th className="px-4 py-2">Actions</th>
+            <th className="px-4 py-2">Rating</th>
+            <th className="px-4 py-2">code</th>
           </tr>
         </thead>
         <tbody>
-          {rooms.map((room) => (
-            <tr key={room._id}>
-              <td className="border px-4 py-2">{room.room_name}</td>
-              <td className="border px-4 py-2">{room.capacity}</td>
-              <td className="border px-4 py-2">{room.location}</td>
-              <td className="border px-4 py-2">{room.price}</td>
+          {providers.map((provider) => (
+            <tr key={provider._id}>
+              <td className="border px-4 py-2">{provider.provider_name}</td>
+              <td className="border px-4 py-2">{provider.provider_email}</td>
+              <td className="border px-4 py-2">{provider.provider_address}</td>
+              <td className="border px-4 py-2">{provider.provider_rating}</td>
+              <td className="border px-4 py-2">{provider.provider_code}</td>
               <td className="border px-4 py-2">
                 <button
-                  onClick={() => handleDeleteRoom(room._id)}
+                  onClick={() => handleDeleteRoom(provider._id)}
                   className="text-red-500"
                 >
                   Delete
@@ -97,4 +98,4 @@ function RoomList() {
   );
 }
 
-export default RoomList;
+export default ProviderList;
