@@ -1,44 +1,48 @@
-const { Request, Response } = require('express');
-const Organization = require('../models/organizations');
-const nodemailer = require('nodemailer');
-const User = require('../models/users');
-const { signToken } = require('../utils/token');
-const { validationResult } = require('express-validator');
-const OrganizationModel = require('../models/organizations');
-const RoomModel=require('../models/room');
-const { v4: uuidv4 } = require('uuid');
+const { Request, Response } = require("express");
+const Organization = require("../models/organizations");
+const nodemailer = require("nodemailer");
+const User = require("../models/users");
+const { signToken } = require("../utils/token");
+const { validationResult } = require("express-validator");
+const OrganizationModel = require("../models/organizations");
+const RoomModel = require("../models/room");
+const ProviderModel = require("../models/providers");
+const { v4: uuidv4 } = require("uuid");
+const BookingModel = require("../models/booking");
 
-
-async function sendEmail(
-  to,
-  subject,
-  text,
-  attachments
-) {
+async function sendEmail(to, subject, text, attachments) {
   // Create a transporter
   const transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    service: "gmail",
     auth: {
-      user: process.env.ADMIN_GMAIL,
-      pass: process.env.ADMIN_GMAIL_PASSWORD,
+      // user: process.env.ADMIN_GMAIL,
+      // pass: process.env.ADMIN_GMAIL_PASSWORD,
+      user: "imrankhan24068@gmail.com",
+      pass: "ImranPathan8",
     },
   });
 
   // Define email data
   const mailOptions = {
     from: process.env.ADMIN_GMAIL,
-    to,
-    subject: subject || 'Default Subject',
-    text: text || 'Default Email Text',
+    to: to,
+    subject: subject || "Default Subject",
+    text: text || "Default Email Text",
     attachments: attachments || [],
   };
 
   // Send the email
   try {
-    await transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
     // console.log('Email sent successfully');
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
   }
 }
 
@@ -52,7 +56,7 @@ async function createOrganization(req, res) {
   }
 
   try {
-    const { orgi_name, orgi_email} = req.body;
+    const { orgi_name, orgi_email } = req.body;
 
     const generatedCodes = new Set();
     const organizations = await Organization.find({});
@@ -60,11 +64,11 @@ async function createOrganization(req, res) {
     organizations.forEach((org) => {
       generatedCodes.add(org.org_code);
     });
-    const charset = '0123456789';
+    const charset = "0123456789";
 
-    let orgi_code = '';
+    let orgi_code = "";
     do {
-      orgi_code = '';
+      orgi_code = "";
       for (let j = 0; j < 4; j++) {
         const randomIndex = Math.floor(Math.random() * charset.length);
         orgi_code += charset.charAt(randomIndex);
@@ -73,9 +77,11 @@ async function createOrganization(req, res) {
 
     generatedCodes.add(orgi_code);
 
-    let org = await Organization.findOne({ org_name: orgi_name});
+    let org = await Organization.findOne({ org_name: orgi_name });
     if (org) {
-      return res.status(404).json({ success, error: "organization configuration already exists" });
+      return res
+        .status(404)
+        .json({ success, error: "organization configuration already exists" });
     }
 
     const Org = new Organization({
@@ -89,7 +95,7 @@ async function createOrganization(req, res) {
     res.status(201).json({ success });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal server error');
+    res.status(500).send("Internal server error");
   }
 }
 
@@ -101,7 +107,7 @@ async function getAllOrg(req, res) {
     res.status(201).json({ success, orgs });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal server error');
+    res.status(500).send("Internal server error");
   }
 }
 
@@ -109,11 +115,14 @@ async function getUsersOrg(req, res) {
   try {
     const { org_name, org_code } = req.body;
 
-    const usersPerOrg = await User.find({  org_code: org_code });
-    const Org = await Organization.findOne({ org_name: org_name, org_code: org_code });
+    const usersPerOrg = await User.find({ org_code: org_code });
+    const Org = await Organization.findOne({
+      org_name: org_name,
+      org_code: org_code,
+    });
 
     if (!usersPerOrg) {
-      res.status(404).send('No users found');
+      res.status(404).send("No users found");
       return;
     }
 
@@ -121,43 +130,44 @@ async function getUsersOrg(req, res) {
 
     res.status(200).json({ Org, usersPerOrg, totalUsers });
   } catch (error) {
-    errorLogger.error(`Error getting the orgUsers:`, error instanceof Error ? error.message : error);
-    console.error('Error finding users:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    errorLogger.error(
+      `Error getting the orgUsers:`,
+      error instanceof Error ? error.message : error
+    );
+    console.error("Error finding users:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
 async function deleteOrgAlongWithUsers(req, res) {
   try {
-    const { org_name, org_email,org_code } = req.body;
+    const { org_name, org_email, org_code } = req.body;
 
     const usersPerOrg = await User.find({ org_code: org_code });
 
     if (usersPerOrg.length > 0) {
-      usersPerOrg.forEach(async user => {
+      usersPerOrg.forEach(async (user) => {
         await User.findOneAndDelete({
           username: user.username,
-          email: user.email
+          email: user.email,
         });
-
       });
     }
 
     const org = await OrganizationModel.findOneAndDelete({
       org_name: org_name,
       org_email: org_email,
-      org_code: org_code
+      org_code: org_code,
     });
 
     appLogger.info(`Organization DELETED: ${org?.org_name}`);
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error finding users:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error finding users:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 }
-
 
 async function getUserInfo(req, res) {
   try {
@@ -165,12 +175,12 @@ async function getUserInfo(req, res) {
 
     const user = await User.find({
       username: username,
-      email: email
-    }).select('-_id -password');
+      email: email,
+    }).select("-_id -password");
 
     res.status(200).json({ success: true, user });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
@@ -180,16 +190,14 @@ async function deleteUser(req, res) {
 
     const existinguser = await User.findOneAndDelete({
       username: username,
-      email: email
-    })
-     
-      res.status(400).json({ success: true, message: 'User found' });
-    }
-    catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+      email: email,
+    });
+
+    res.status(400).json({ success: true, message: "User found" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
 }
-
 
 async function getOrganization(req, res) {
   let success = false;
@@ -205,37 +213,39 @@ async function getOrganization(req, res) {
     const Orgi = await Organization.findOne({
       org_name: orgi_name,
       org_code: orgi_code,
-    })
+    });
 
     if (!Orgi) {
-      return res.status(400).json({ success, error: 'Please try with correct stuff' });
+      return res
+        .status(400)
+        .json({ success, error: "Please try with correct stuff" });
     }
 
     success = true;
     res.status(201).json({ success, Orgi });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal server error');
+    res.status(500).send("Internal server error");
   }
 }
 
 const adminDashboard = (req, res) => {
-  res.status(200).json('Chillaxxx admin');
+  res.status(200).json("Chillaxxx admin");
 };
 
 async function sendCodetoEmail(req, res) {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const org = await Organization.findOne({
       org_name: req.body.org_name,
       org_email: req.body.org_email,
-    }).select('-_id');
+    }).select("-_id");
 
     if (!org) {
-      res.status(404).json({ message: 'organization not found' });
+      res.status(404).json({ message: "organization not found" });
       return;
     }
-    console.log(org)
+    console.log(org);
     const disCode = org.org_code;
 
     const email = org.org_email;
@@ -245,16 +255,73 @@ async function sendCodetoEmail(req, res) {
     await sendEmail(email, subject, text);
 
     res.status(200).json({ success: true });
-
   } catch (error) {
     res.status(500).json({ success: false, error: error });
   }
-};
+}
 
+async function addProvider(req, res) {
+  try {
+    // const {
+    //   provider_name,
+    //   provider_email,
+    //   provider_code,
+    //   provider_address,
+    //   provider_phone,
+    //   provider_description,
+    //   provider_rating,
+    //   provider_reviews,
+    //   provider_rooms,
+    // } = req.body;
+    // const newProvider = new ProviderModel({
+    //   provider_name,
+    //   provider_email,
+    //   provider_code,
+    //   provider_address,
+    //   provider_phone,
+    //   provider_description,
+    //   provider_rating,
+    //   provider_reviews,
+    //   provider_rooms,
+    // });
+    const newProvider = new ProviderModel(req.body);
+    await newProvider.save();
+    res.status(201).json({ success: true, provider: newProvider });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
+
+async function getProviderList(req, res) {
+  try {
+    const providers = await ProviderModel.find();
+    const data = providers.map((provider) => {
+      return {
+        provider_id: provider._id,
+        provider_name: provider.provider_name,
+      };
+    });
+    res.status(200).json({ success: true, data });
+  } catch {
+    console.error("Unable to fetch the Office Space Providers:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
+
+async function getAllProviders(req, res) {
+  try {
+    const providers = await ProviderModel.find();
+    res.status(200).json({ success: true, providers });
+  } catch (error) {
+    console.error("Error getting all providers:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
 
 async function addRoom(req, res) {
   try {
-    const { room_name, location, capacity, price } = req.body;
+    const { room_name, capacity, price, provider_id } = req.body;
 
     const roomId = uuidv4();
 
@@ -262,10 +329,10 @@ async function addRoom(req, res) {
     const newRoom = new RoomModel({
       roomId,
       room_name,
-      location,
       capacity,
       available: true,
       price,
+      provider_id,
     });
 
     // Save the room to the database
@@ -274,7 +341,7 @@ async function addRoom(req, res) {
     res.status(201).json({ success: true, room: newRoom });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
@@ -283,31 +350,32 @@ async function getAllRooms(req, res) {
     const rooms = await RoomModel.find();
     res.status(200).json({ success: true, rooms });
   } catch (error) {
-    console.error('Error getting all rooms:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error getting all rooms:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 }
 
-// async function deleteRoom(req, res) {
-//   const { roomId } = req.params;
+async function deleteRoom(req, res) {
+  const { roomId } = req.params;
+  console.log(roomId);
 
-//   try {
-//     const room = await RoomModel.findById(roomId);
+  try {
+    const room = await RoomModel.findById(roomId);
 
-//     if (!room) {
-//       return res.status(404).json({ success: false, error: 'Room not found' });
-//     }
+    if (!room) {
+      return res.status(404).json({ success: false, error: "Room not found" });
+    }
 
-//     await Room.findByIdAndDelete(roomId);
+    await RoomModel.findByIdAndDelete(roomId);
 
-//     res.status(200).json({ success: true, message: 'Room deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting room:', error);
-//     res.status(500).json({ success: false, error: 'Internal server error' });
-//   }
-// }
-
-
+    res
+      .status(200)
+      .json({ success: true, message: "Room deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting room:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
 
 module.exports = {
   createOrganization,
@@ -321,4 +389,8 @@ module.exports = {
   sendCodetoEmail,
   addRoom,
   getAllRooms,
+  deleteRoom,
+  getAllProviders,
+  addProvider,
+  getProviderList,
 };

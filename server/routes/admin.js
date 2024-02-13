@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 
-const { body } = require('express-validator');
+const { body } = require("express-validator");
 const {
   createOrganization,
   adminDashboard,
@@ -13,33 +13,43 @@ const {
   deleteOrgAlongWithUsers,
   addRoom,
   getAllRooms,
-} = require('../controllers/adminController.js');
+  deleteRoom,
+  getAllProviders,
+  addProvider,
+  getProviderList,
+} = require("../controllers/adminController.js");
 // const fetchUser = require('../middlewares/fetchUser');
 
 const router = express.Router();
 
-router.post('/createorg',createOrganization);
+router.post("/createorg", createOrganization);
 
-router.get('/getallorgs', getAllOrg);
+router.get("/getallorgs", getAllOrg);
 
 // router.post('/getorg', getOrganization);
 
-router.post('/getusersorg', getUsersOrg);
+router.post("/getusersorg", getUsersOrg);
 
-router.post('/getuserinfo', getUserInfo);
+router.post("/getuserinfo", getUserInfo);
 
-router.post('/deleteorg', deleteOrgAlongWithUsers);
+router.post("/deleteorg", deleteOrgAlongWithUsers);
 
-router.post('/deleteuser', deleteUser);
+router.post("/deleteuser", deleteUser);
 
-router.get('/dashboard', adminDashboard);
+router.get("/dashboard", adminDashboard);
 
-router.post('/sendcodetoemail', sendCodetoEmail);
+router.post("/sendcodetoemail", sendCodetoEmail);
 
-router.post('/addroom',addRoom)
+router.get("/getAllProviders", getAllProviders);
 
-router.get('/getallrooms',getAllRooms)
+router.get("/getProviderList", getProviderList);
 
-// router.post('/deleteroom',)
+router.post("/addprovider", addProvider);
+
+router.post("/addroom", addRoom);
+
+router.get("/getallrooms", getAllRooms);
+
+router.delete("/deleteroom/:roomId", deleteRoom);
 
 module.exports = router;
